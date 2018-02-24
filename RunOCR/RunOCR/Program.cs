@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using System.Configuration;
 
 namespace RunOCR
 {
@@ -67,6 +68,7 @@ namespace RunOCR
 
 
             //2. optimize and process noise points  --  Yao Di
+            RunNoiseRemove(args[0], args.Length == 3 ? args[2] : null);
 
             //3. will .jpg convert to .tif format
             RunPictureConverter(args[0], PicFormat.JPG, PicFormat.TIF);
@@ -186,6 +188,31 @@ namespace RunOCR
                 p.Start();
 
                 string cmd = "PictureConverter.exe " + folder + " " + oriFormat + " " + desFormat;
+                p.StandardInput.WriteLine(cmd + "&exit");
+
+                p.StandardInput.AutoFlush = true;
+
+                string output = p.StandardOutput.ReadToEnd();
+                Console.WriteLine(output);
+                p.WaitForExit();
+                p.Close();
+            }
+        }
+
+        public static void RunNoiseRemove(string folder, string recurse)
+        {
+            string cmdPath = "cmd.exe";
+            using (Process p = new Process())
+            {
+                p.StartInfo.FileName = cmdPath;
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardInput = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.CreateNoWindow = false;
+                p.Start();
+
+                string cmd = ConfigurationManager.AppSettings["NoiseRemoveExePath"] + " " + folder + " " + recurse;
                 p.StandardInput.WriteLine(cmd + "&exit");
 
                 p.StandardInput.AutoFlush = true;
